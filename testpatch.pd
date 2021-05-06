@@ -1,11 +1,16 @@
-#N canvas 204 224 450 300 12;
+#N canvas 343 232 450 300 12;
 #X obj 180 102 mpu6050rpi;
 #X obj 169 42 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
 -1;
-#X msg 249 46 stop;
 #X obj 173 162 print x;
 #X obj 249 159 print y;
-#X connect 0 0 3 0;
-#X connect 0 1 4 0;
+#X obj 214 37 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 266 33 15 40;
+#X obj 285 126 print offsetlist;
+#X connect 0 0 2 0;
+#X connect 0 1 3 0;
+#X connect 0 3 6 0;
 #X connect 1 0 0 0;
-#X connect 2 0 0 0;
+#X connect 4 0 0 1;
+#X connect 5 0 0 2;
