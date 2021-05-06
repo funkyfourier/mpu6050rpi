@@ -1,0 +1,5 @@
+#N canvas 204 224 450 300 12;
+#X obj 180 102 mpu6050rpi;
+#X obj 169 42 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X connect 1 0 0 0;
