@@ -3,5 +3,9 @@
 #X obj 169 42 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
 -1;
 #X msg 249 46 stop;
+#X obj 173 162 print x;
+#X obj 249 159 print y;
+#X connect 0 0 3 0;
+#X connect 0 1 4 0;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
