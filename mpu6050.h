@@ -49,6 +49,7 @@
 
 void init_mpu6050();
 void stop_mpu6050();
+void get_offsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off);
 
 struct timespec start,end;
 

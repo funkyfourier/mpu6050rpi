@@ -23,13 +23,17 @@ void mpu6050rpi_bang(t_mpu6050rpi *x)
 void mpu6050rpi_calibrate(t_mpu6050rpi *x)
 {
     post("mpu6050rpi_calibrate");
+    float ax_off, ay_off, az_off, gr_off, gp_off, gy_off;
+
+    get_offsets(&ax_off, &ay_off, &az_off, &gr_off, &gp_off, &gy_off);
+
     t_atom list[6];
-    SETFLOAT(list, (t_float)1);
-    SETFLOAT(list+1, (t_float)2);
-    SETFLOAT(list+2, (t_float)3);
-    SETFLOAT(list+3, (t_float)4);
-    SETFLOAT(list+4, (t_float)5);
-    SETFLOAT(list+5, (t_float)6);
+    SETFLOAT(list, (t_float)ax_off);
+    SETFLOAT(list+1, (t_float)ay_off);
+    SETFLOAT(list+2, (t_float)az_off);
+    SETFLOAT(list+3, (t_float)gr_off);
+    SETFLOAT(list+4, (t_float)gp_off);
+    SETFLOAT(list+5, (t_float)gy_off);
     outlet_list(x->offset_values_out, &s_list, 6, list);
 }
 

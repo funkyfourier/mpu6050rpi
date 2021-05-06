@@ -40,6 +40,27 @@ void get_accel(float *x, float *y, float *z) {
 	*z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
 }
 
+void get_offsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off) {
+	float gyro_off[3]; //Temporary storage
+	float accel_off[3];
+
+	*gr_off = 0, *gp_off = 0, *gy_off = 0; //Initialize the offsets to zero
+	*ax_off = 0, *ay_off = 0, *az_off = 0; //Initialize the offsets to zero
+
+	for (int i = 0; i < 10000; i++) { //Use loop to average offsets
+		get_gyro_raw(&gyro_off[0], &gyro_off[1], &gyro_off[2]); //Raw gyroscope values
+		*gr_off = *gr_off + gyro_off[0], *gp_off = *gp_off + gyro_off[1], *gy_off = *gy_off + gyro_off[2]; //Add to sum
+
+		get_accel_raw(&accel_off[0], &accel_off[1], &accel_off[2]); //Raw accelerometer values
+		*ax_off = *ax_off + accel_off[0], *ay_off = *ay_off + accel_off[1], *az_off = *az_off + accel_off[2]; //Add to sum
+	}
+
+	*gr_off = *gr_off / 10000, *gp_off = *gp_off / 10000, *gy_off = *gy_off / 10000; //Divide by number of loops (to average)
+	*ax_off = *ax_off / 10000, *ay_off = *ay_off / 10000, *az_off = *az_off / 10000;
+
+	*az_off = *az_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
+}
+
 static float wrap(float angle_to_wrap, float limit){
   while (angle_to_wrap >  limit) angle_to_wrap -= 2*limit;
   while (angle_to_wrap < -limit) angle_to_wrap += 2*limit;
@@ -113,12 +134,14 @@ void setup(){
     i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
 }
 
-void init_mpu6050(){
-    post("init_mpu6050");
-
-    setup();
-
+void start_thread(){
     running = 1;
     pthread_t sensor_loop_thread;
     pthread_create(&sensor_loop_thread, NULL, sensor_loop, NULL);
+}
+
+void init_mpu6050(){
+    post("init_mpu6050");
+    setup();
+    start_thread();
 }
