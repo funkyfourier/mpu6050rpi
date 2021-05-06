@@ -1,6 +1,6 @@
 lib.name = mpu6050rpi
 
-mpu6050rpi.class.sources = mpu6050rpi.c
+mpu6050rpi.class.sources = mpu6050rpi.c mpu6050.c
 
 ldlibs = -li2c
 

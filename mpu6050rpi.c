@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <i2c/smbus.h>
+#include "mpu6050.h"
 
 static t_class *mpu6050rpi_class;
 
@@ -58,18 +59,21 @@ void mpu6050rpi_bang(t_mpu6050rpi *x)
     i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001), 
     i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
 
-    
+
 
 }
 
 void *mpu6050rpi_new(void)
 {
+    init_mpu6050();
     t_mpu6050rpi *x = (t_mpu6050rpi *)pd_new(mpu6050rpi_class);
     return x;
 }
 
 void mpu6050rpi_free(t_mpu6050rpi *x)
 {
+    post("free");
+    stop_mpu6050();
 }
 
 void mpu6050rpi_setup(void)
