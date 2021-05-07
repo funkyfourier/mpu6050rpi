@@ -91,7 +91,17 @@ void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
 void mpu6050rpi_free(t_mpu6050rpi *x)
 {
     post("free");
-    stop_mpu6050();
+    stop_thread();
+}
+
+void mpu6050rpi_start_thread(t_mpu6050rpi *x)
+{
+    start_thread();
+}
+
+void mpu6050rpi_stop_thread(t_mpu6050rpi *x)
+{
+    stop_thread();
 }
 
 void mpu6050rpi_setup(void)
@@ -111,6 +121,18 @@ void mpu6050rpi_setup(void)
         mpu6050rpi_class,
         (t_method)mpu6050rpi_calibrate,
         gensym("calibrate"),
+        0);
+
+    class_addmethod(
+        mpu6050rpi_class,
+        (t_method)mpu6050rpi_start_thread,
+        gensym("start"),
+        0);
+
+    class_addmethod(
+        mpu6050rpi_class,
+        (t_method)mpu6050rpi_stop_thread,
+        gensym("stop"),
         0);
 
     class_addmethod(

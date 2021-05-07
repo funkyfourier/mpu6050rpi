@@ -122,7 +122,7 @@ static float wrap(float angle_to_wrap, float limit)
     return angle_to_wrap;
 }
 
-void stop_mpu6050()
+void stop_thread()
 {
     running = 0;
 }
@@ -144,8 +144,6 @@ void setup()
     {
         post("ERROR: Could not get I2C bus with adress: %i", MPU6050_addr); //Print error message
     }
-
-    post("status: %d", status);
 
     i2c_smbus_write_byte_data(f_dev, 0x6b, 0b00000000); //Take MPU6050 out of sleep mode - see Register Map
 
@@ -196,6 +194,7 @@ void *sensor_loop(void *arg)
 
 void start_thread()
 {
+    if(running == 1) return;
     running = 1;
     pthread_t sensor_loop_thread;
     pthread_create(&sensor_loop_thread, NULL, sensor_loop, NULL);
