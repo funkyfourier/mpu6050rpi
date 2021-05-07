@@ -11,8 +11,8 @@
 
 struct OffsetParams
 {
-    void* x;
-    void (*callback)(void*, float, float, float, float, float, float);
+    void *x;
+    void (*callback)(void *, float, float, float, float, float, float);
 };
 
 void get_gyro_raw(float *roll, float *pitch, float *yaw)
@@ -28,9 +28,9 @@ void get_gyro_raw(float *roll, float *pitch, float *yaw)
 void get_gyro(float *roll, float *pitch, float *yaw)
 {
     get_gyro_raw(roll, pitch, yaw);                                 //Store raw values into variables
-    *roll = round((*roll - G_OFF_X) * 1000.0 / GYRO_SENS) / 1000.0; //Remove the offset and divide by the gyroscope sensetivity (use 1000 and round() to round the value to three decimal places)
-    *pitch = round((*pitch - G_OFF_Y) * 1000.0 / GYRO_SENS) / 1000.0;
-    *yaw = round((*yaw - G_OFF_Z) * 1000.0 / GYRO_SENS) / 1000.0;
+    *roll = round((*roll - offset_gyro_r) * 1000.0 / GYRO_SENS) / 1000.0; //Remove the offset and divide by the gyroscope sensetivity (use 1000 and round() to round the value to three decimal places)
+    *pitch = round((*pitch - offset_gyro_p) * 1000.0 / GYRO_SENS) / 1000.0;
+    *yaw = round((*yaw - offset_gyro_y) * 1000.0 / GYRO_SENS) / 1000.0;
 }
 
 void get_accel_raw(float *x, float *y, float *z)
@@ -46,9 +46,21 @@ void get_accel_raw(float *x, float *y, float *z)
 void get_accel(float *x, float *y, float *z)
 {
     get_accel_raw(x, y, z);                                    //Store raw values into variables
-    *x = round((*x - A_OFF_X) * 1000.0 / ACCEL_SENS) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
-    *y = round((*y - A_OFF_Y) * 1000.0 / ACCEL_SENS) / 1000.0;
-    *z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
+    *x = round((*x - offset_acc_x) * 1000.0 / ACCEL_SENS) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
+    *y = round((*y - offset_acc_y) * 1000.0 / ACCEL_SENS) / 1000.0;
+    *z = round((*z - offset_acc_z) * 1000.0 / ACCEL_SENS) / 1000.0;
+}
+
+void get_angle(int axis, float *result) {
+	if (axis >= 0 && axis <= 2) { //Check that the axis is in the valid range
+		*result = angle[axis]; //Get the result
+		return 0;
+	}
+	else {
+		post("ERR (MPU6050.cpp:getAngle()): 'axis' must be between 0 and 2 (for roll, pitch or yaw)");
+		*result = 0; //Set result to zero
+		return 1;
+	}
 }
 
 void *calculate_offsets(void *arg)
@@ -63,16 +75,16 @@ void *calculate_offsets(void *arg)
     float gr_off = 0;
     float gp_off = 0;
     float gy_off = 0;
-    
+
     float gyro_off[3]; //Temporary storage
     float accel_off[3];
 
     for (int i = 0; i < 10000; i++)
-    {                                                                                                      //Use loop to average offsets
-        get_gyro_raw(&gyro_off[0], &gyro_off[1], &gyro_off[2]);                                            //Raw gyroscope values
+    {                                                                                                //Use loop to average offsets
+        get_gyro_raw(&gyro_off[0], &gyro_off[1], &gyro_off[2]);                                      //Raw gyroscope values
         gr_off = gr_off + gyro_off[0], gp_off = gp_off + gyro_off[1], gy_off = gy_off + gyro_off[2]; //Add to sum
 
-        get_accel_raw(&accel_off[0], &accel_off[1], &accel_off[2]);                                           //Raw accelerometer values
+        get_accel_raw(&accel_off[0], &accel_off[1], &accel_off[2]);                                     //Raw accelerometer values
         ax_off = ax_off + accel_off[0], ay_off = ay_off + accel_off[1], az_off = az_off + accel_off[2]; //Add to sum
     }
 
@@ -88,12 +100,22 @@ void *calculate_offsets(void *arg)
     return 0;
 }
 
-void get_offsets(void* x, void (*callback)(void*, float, float, float, float, float, float)){
+void get_offsets(void *x, void (*callback)(void *, float, float, float, float, float, float))
+{
     struct OffsetParams *offsetParams = (struct OffsetParams *)malloc(sizeof(struct OffsetParams));
     offsetParams->x = x;
     offsetParams->callback = callback;
     pthread_t calc_offset_thread;
     pthread_create(&calc_offset_thread, NULL, calculate_offsets, (void *)offsetParams);
+}
+
+void set_offsets(float acc_x, float acc_y, float acc_z, float gyro_r, float gyro_p, float gyro_y){
+    offset_acc_x = acc_x;
+    offset_acc_y = acc_y;
+    offset_acc_z = acc_z;
+    offset_gyro_r = gyro_r;
+    offset_gyro_p = gyro_p;
+    offset_gyro_y = gyro_y;
 }
 
 static float wrap(float angle_to_wrap, float limit)
@@ -120,6 +142,10 @@ void *sensor_loop(void *arg)
         angle[0] = wrap(FILTER_GYRO_COEF * (angle_acc_x + wrap(angle[0] + gr * dt - angle_acc_x, 180)) + (1.0 - FILTER_GYRO_COEF) * angle_acc_x, 180);
         angle[1] = wrap(FILTER_GYRO_COEF * (angle_acc_y + wrap(angle[1] + sgZ * gp * dt - angle_acc_y, 90)) + (1.0 - FILTER_GYRO_COEF) * angle_acc_y, 90);
         angle[2] += gy * dt;
+
+        clock_gettime(CLOCK_REALTIME, &end);
+        dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
+		clock_gettime(CLOCK_REALTIME, &start); //Save time to start clock
     }
     post("thread stopped");
     return 0;
@@ -186,6 +212,14 @@ void start_thread()
 void init_mpu6050()
 {
     post("init_mpu6050");
+
+    offset_acc_x = 0;
+    offset_acc_y = 0;
+    offset_acc_z = 0;
+    offset_gyro_r = 0;
+    offset_gyro_p = 0;
+    offset_gyro_y = 0;
+
     setup();
     start_thread();
 }

@@ -14,10 +14,13 @@ typedef struct _mpu6050rpi
 
 void mpu6050rpi_bang(t_mpu6050rpi *x)
 {
-    post("Hello world !!");
-    outlet_float(x->angle_x_out, 212121);
-    outlet_float(x->angle_y_out, -212121);
-    outlet_float(x->angle_z_out, 0);
+    float angle_x, angle_y, angle_z;
+    get_angle(0, &angle_x);
+    get_angle(1, &angle_y);
+    get_angle(2, &angle_z);
+    outlet_float(x->angle_x_out, angle_x);
+    outlet_float(x->angle_y_out, angle_y);
+    outlet_float(x->angle_z_out, angle_z);
 }
 
 void mpu6050rpi_calibrate_callback(
@@ -36,27 +39,28 @@ void mpu6050rpi_calibrate_callback(
     SETFLOAT(list + 3, (t_float)gr_off);
     SETFLOAT(list + 4, (t_float)gp_off);
     SETFLOAT(list + 5, (t_float)gy_off);
-    t_mpu6050rpi *y = (t_mpu6050rpi*)x;
+    t_mpu6050rpi *y = (t_mpu6050rpi *)x;
     outlet_list(y->offset_values_out, &s_list, 6, list);
 }
 
 void mpu6050rpi_calibrate(t_mpu6050rpi *x)
 {
-    post("mpu6050rpi_calibrate");
-
     get_offsets(x, mpu6050rpi_calibrate_callback);
 }
 
 void mpu6050rpi_set_offsets(
     t_mpu6050rpi *x,
-    t_floatarg a_offset_x,
-    t_floatarg a_offset_y,
-    t_floatarg a_offset_z,
-    t_floatarg g_offset_x,
-    t_floatarg g_offset_y,
-    t_floatarg g_offset_z)
+    t_symbol *s,
+    int argc,
+    t_atom *argv)
 {
-    post("a_offset_x: %f, a_offset_y: %f", a_offset_x, a_offset_y);
+    set_offsets(
+        atom_getfloatarg(0, argc, argv),
+        atom_getfloatarg(1, argc, argv),
+        atom_getfloatarg(2, argc, argv),
+        atom_getfloatarg(3, argc, argv),
+        atom_getfloatarg(4, argc, argv),
+        atom_getfloatarg(5, argc, argv));
 }
 
 void *mpu6050rpi_new(void)

@@ -2,6 +2,7 @@
 #define MPU6050
 #include <time.h>
 
+/*
 //Offsets - supply your own here (calculate offsets with getOffsets function)
 //     Accelerometer
 #define A_OFF_X 14172
@@ -11,6 +12,7 @@
 #define G_OFF_X -308
 #define G_OFF_Y -157
 #define G_OFF_Z 124
+*/
 
 //Select the appropriate settings
 #if GYRO_RANGE == 1
@@ -51,6 +53,15 @@ void init_mpu6050();
 void stop_mpu6050();
 void start_thread();
 void get_offsets(void* x, void (*callback)(void*, float, float, float, float, float, float));
+void set_offsets(float acc_x, float acc_y, float acc_z, float gyro_r, float gyro_p, float gyro_y);
+void get_angle(int axis, float *result);
+
+float offset_acc_x;
+float offset_acc_y;
+float offset_acc_z;
+float offset_gyro_r;
+float offset_gyro_p;
+float offset_gyro_y;
 
 struct timespec start,end;
 
