@@ -20,21 +20,31 @@ void mpu6050rpi_bang(t_mpu6050rpi *x)
     outlet_float(x->angle_z_out, 0);
 }
 
+void mpu6050rpi_calibrate_callback(
+    void *x,
+    float ax_off,
+    float ay_off,
+    float az_off,
+    float gr_off,
+    float gp_off,
+    float gy_off)
+{
+    t_atom list[6];
+    SETFLOAT(list, (t_float)ax_off);
+    SETFLOAT(list + 1, (t_float)ay_off);
+    SETFLOAT(list + 2, (t_float)az_off);
+    SETFLOAT(list + 3, (t_float)gr_off);
+    SETFLOAT(list + 4, (t_float)gp_off);
+    SETFLOAT(list + 5, (t_float)gy_off);
+    t_mpu6050rpi *y = (t_mpu6050rpi*)x;
+    outlet_list(y->offset_values_out, &s_list, 6, list);
+}
+
 void mpu6050rpi_calibrate(t_mpu6050rpi *x)
 {
     post("mpu6050rpi_calibrate");
-    float ax_off, ay_off, az_off, gr_off, gp_off, gy_off;
 
-    get_offsets(&ax_off, &ay_off, &az_off, &gr_off, &gp_off, &gy_off);
-
-    t_atom list[6];
-    SETFLOAT(list, (t_float)ax_off);
-    SETFLOAT(list+1, (t_float)ay_off);
-    SETFLOAT(list+2, (t_float)az_off);
-    SETFLOAT(list+3, (t_float)gr_off);
-    SETFLOAT(list+4, (t_float)gp_off);
-    SETFLOAT(list+5, (t_float)gy_off);
-    outlet_list(x->offset_values_out, &s_list, 6, list);
+    get_offsets(x, mpu6050rpi_calibrate_callback);
 }
 
 void mpu6050rpi_set_offsets(

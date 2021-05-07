@@ -9,6 +9,12 @@
 #include <math.h>
 #include <stdlib.h>
 
+struct OffsetParams
+{
+    void* x;
+    void (*callback)(void*, float, float, float, float, float, float);
+};
+
 void get_gyro_raw(float *roll, float *pitch, float *yaw)
 {
     int16_t X = i2c_smbus_read_byte_data(f_dev, 0x43) << 8 | i2c_smbus_read_byte_data(f_dev, 0x44); //Read X registers
@@ -45,60 +51,49 @@ void get_accel(float *x, float *y, float *z)
     *z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
 }
 
-struct OffsetParams
-{
-    float *ax_off;
-    float *ay_off;
-    float *az_off;
-    float *gr_off;
-    float *gp_off;
-    float *gy_off;
-};
-
 void *calculate_offsets(void *arg)
 {
+    running = 0;
+    post("Calculating the offsets. Please keep the accelerometer level and still. This could take a couple of minutes...");
     struct OffsetParams *offsetParams = arg;
 
-    float* ax_off = offsetParams->ax_off;
-    float* ay_off = offsetParams->ay_off;
-    float* az_off = offsetParams->az_off;
-    float* gr_off = offsetParams->gr_off;
-    float* gp_off = offsetParams->gp_off;
-    float* gy_off = offsetParams->gy_off;
+    float ax_off = 0;
+    float ay_off = 0;
+    float az_off = 0;
+    float gr_off = 0;
+    float gp_off = 0;
+    float gy_off = 0;
     
     float gyro_off[3]; //Temporary storage
     float accel_off[3];
 
-    *gr_off = 0, *gp_off = 0, *gy_off = 0; //Initialize the offsets to zero
-    *ax_off = 0, *ay_off = 0, *az_off = 0; //Initialize the offsets to zero
-
     for (int i = 0; i < 10000; i++)
     {                                                                                                      //Use loop to average offsets
         get_gyro_raw(&gyro_off[0], &gyro_off[1], &gyro_off[2]);                                            //Raw gyroscope values
-        *gr_off = *gr_off + gyro_off[0], *gp_off = *gp_off + gyro_off[1], *gy_off = *gy_off + gyro_off[2]; //Add to sum
+        gr_off = gr_off + gyro_off[0], gp_off = gp_off + gyro_off[1], gy_off = gy_off + gyro_off[2]; //Add to sum
 
         get_accel_raw(&accel_off[0], &accel_off[1], &accel_off[2]);                                           //Raw accelerometer values
-        *ax_off = *ax_off + accel_off[0], *ay_off = *ay_off + accel_off[1], *az_off = *az_off + accel_off[2]; //Add to sum
+        ax_off = ax_off + accel_off[0], ay_off = ay_off + accel_off[1], az_off = az_off + accel_off[2]; //Add to sum
     }
 
-    *gr_off = *gr_off / 10000, *gp_off = *gp_off / 10000, *gy_off = *gy_off / 10000; //Divide by number of loops (to average)
-    *ax_off = *ax_off / 10000, *ay_off = *ay_off / 10000, *az_off = *az_off / 10000;
+    gr_off = gr_off / 10000, gp_off = gp_off / 10000, gy_off = gy_off / 10000; //Divide by number of loops (to average)
+    ax_off = ax_off / 10000, ay_off = ay_off / 10000, az_off = az_off / 10000;
 
-    *az_off = *az_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)*/
+    az_off = az_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
+
+    offsetParams->callback(offsetParams->x, ax_off, ay_off, az_off, gr_off, gp_off, gy_off);
+
+    start_thread();
+
+    return 0;
 }
 
-void get_offsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off)
-{
+void get_offsets(void* x, void (*callback)(void*, float, float, float, float, float, float)){
     struct OffsetParams *offsetParams = (struct OffsetParams *)malloc(sizeof(struct OffsetParams));
-    offsetParams->ax_off = ax_off;
-    offsetParams->ay_off = ay_off;
-    offsetParams->az_off = az_off;
-    offsetParams->gr_off = gr_off;
-    offsetParams->gp_off = gp_off;
-    offsetParams->gy_off = gy_off;
-    pthread_t calculate_offsets_thread;
-    pthread_create(&calculate_offsets_thread, NULL, calculate_offsets, (void *)offsetParams);
-    pthread_join(calculate_offsets_thread, NULL);
+    offsetParams->x = x;
+    offsetParams->callback = callback;
+    pthread_t calc_offset_thread;
+    pthread_create(&calc_offset_thread, NULL, calculate_offsets, (void *)offsetParams);
 }
 
 static float wrap(float angle_to_wrap, float limit)
