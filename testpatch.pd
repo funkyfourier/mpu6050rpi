@@ -1,24 +1,31 @@
-#N canvas 207 240 611 347 12;
-#X obj 42 143 mpu6050rpi;
-#X obj 75 73 bng 15 250 50 0 empty empty calibrate 17 7 0 10 -262144
+#N canvas 207 240 611 437 12;
+#X obj 42 238 mpu6050rpi;
+#X obj 75 72 bng 15 250 50 0 empty empty calibrate 17 7 0 10 -262144
 -1 -1;
-#X obj 109 170 print offsetlist;
-#X msg 109 118 14199.8 12473 -10703.8 -318.888 -156.358 123.408;
-#X obj 42 44 metro 100;
-#X obj 109 94 loadbang;
-#X obj 42 267 nbx 5 14 -1e+37 1e+37 0 0 empty empty x 0 -8 0 10 -262144
--1 -1 0.406365 256;
-#X obj 86 214 nbx 10 14 -5000 5000 0 0 empty empty z 0 -8 0 10 -262144
--1 -1 273.899 256;
-#X obj 64 240 nbx 5 14 -1e+37 1e+37 0 0 empty empty y 0 -8 0 10 -262144
--1 -1 -2.27921 256;
-#X obj 42 20 loadbang;
-#X connect 0 0 6 0;
-#X connect 0 1 8 0;
-#X connect 0 2 7 0;
-#X connect 0 3 2 0;
+#X msg 109 213 14770.7 12608.6 -10677.4 -316.32 -156.091 123.227;
+#X obj 42 43 metro 100;
+#X obj 109 102 loadbang;
+#X obj 42 362 nbx 5 14 -1e+37 1e+37 0 0 empty empty x 0 -8 0 10 -262144
+-1 -1 0.0314156 256;
+#X obj 86 309 nbx 10 14 -5000 5000 0 0 empty empty z 0 -8 0 10 -262144
+-1 -1 275.359 256;
+#X obj 64 335 nbx 5 14 -1e+37 1e+37 0 0 empty empty y 0 -8 0 10 -262144
+-1 -1 0.0100938 256;
+#X obj 42 19 loadbang;
+#X msg 153 186 set \$1 \$2 \$3 \$4 \$5 \$6;
+#X obj 109 269 s \$0-setcal;
+#X obj 121 162 t b l;
+#X obj 121 139 r \$0-setcal;
+#X connect 0 0 5 0;
+#X connect 0 1 7 0;
+#X connect 0 2 6 0;
+#X connect 0 3 10 0;
 #X connect 1 0 0 1;
-#X connect 3 0 0 2;
-#X connect 4 0 0 0;
-#X connect 5 0 3 0;
-#X connect 9 0 4 0;
+#X connect 2 0 0 2;
+#X connect 3 0 0 0;
+#X connect 4 0 2 0;
+#X connect 8 0 3 0;
+#X connect 9 0 2 0;
+#X connect 11 0 2 0;
+#X connect 11 1 9 0;
+#X connect 12 0 11 0;
