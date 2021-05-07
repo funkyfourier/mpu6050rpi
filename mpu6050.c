@@ -122,30 +122,6 @@ static float wrap(float angle_to_wrap, float limit)
     return angle_to_wrap;
 }
 
-void *sensor_loop(void *arg)
-{
-    clock_gettime(CLOCK_REALTIME, &start);
-    while (running > 0)
-    {
-        get_gyro(&gr, &gp, &gy);
-        get_accel(&ax, &ay, &az);
-        sgZ = (az >= 0) - (az < 0); // allow one angle to go from -180° to +180°
-
-        angle_acc_x = atan2(ay, sgZ * sqrt(az * az + ax * ax)) * RAD_T_DEG; // [-180°,+180°]
-        angle_acc_y = -atan2(ax, sqrt(az * az + ay * ay)) * RAD_T_DEG;      // [- 90°,+ 90°]
-
-        angle[0] = wrap(FILTER_GYRO_COEF * (angle_acc_x + wrap(angle[0] + gr * dt - angle_acc_x, 180)) + (1.0 - FILTER_GYRO_COEF) * angle_acc_x, 180);
-        angle[1] = wrap(FILTER_GYRO_COEF * (angle_acc_y + wrap(angle[1] + sgZ * gp * dt - angle_acc_y, 90)) + (1.0 - FILTER_GYRO_COEF) * angle_acc_y, 90);
-        angle[2] += gy * dt;
-
-        clock_gettime(CLOCK_REALTIME, &end);
-        dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
-        clock_gettime(CLOCK_REALTIME, &start);                                  //Save time to start clock
-    }
-    post("thread stopped");
-    return 0;
-}
-
 void stop_mpu6050()
 {
     running = 0;
@@ -191,6 +167,31 @@ void setup()
         i2c_smbus_write_byte_data(f_dev, 0x00, 0b10000001),
         i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001),
         i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
+}
+
+void *sensor_loop(void *arg)
+{
+    post("sensor thread started");
+    clock_gettime(CLOCK_REALTIME, &start);
+    while (running > 0)
+    {
+        get_gyro(&gr, &gp, &gy);
+        get_accel(&ax, &ay, &az);
+        sgZ = (az >= 0) - (az < 0); // allow one angle to go from -180° to +180°
+
+        angle_acc_x = atan2(ay, sgZ * sqrt(az * az + ax * ax)) * RAD_T_DEG; // [-180°,+180°]
+        angle_acc_y = -atan2(ax, sqrt(az * az + ay * ay)) * RAD_T_DEG;      // [- 90°,+ 90°]
+
+        angle[0] = wrap(filter_coeff * (angle_acc_x + wrap(angle[0] + gr * dt - angle_acc_x, 180)) + (1.0 - filter_coeff) * angle_acc_x, 180);
+        angle[1] = wrap(filter_coeff * (angle_acc_y + wrap(angle[1] + sgZ * gp * dt - angle_acc_y, 90)) + (1.0 - filter_coeff) * angle_acc_y, 90);
+        angle[2] += gy * dt;
+
+        clock_gettime(CLOCK_REALTIME, &end);
+        dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
+        clock_gettime(CLOCK_REALTIME, &start);                                  //Save time to start clock
+    }
+    post("sensor thread stopped");
+    return 0;
 }
 
 void start_thread()
@@ -246,8 +247,9 @@ void set_ranges(int acc_range, int gyro_range)
     }
 }
 
-void init_mpu6050(int acc_range, int gyro_range)
+void init_mpu6050(int acc_range, int gyro_range, float f_coeff)
 {
+    filter_coeff = f_coeff;
     set_ranges(acc_range, gyro_range);
     setup();
     start_thread();

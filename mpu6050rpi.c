@@ -66,15 +66,15 @@ void mpu6050rpi_set_offsets(
 void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
 {
     int acc_range = 0, gyro_range = 0;
-    if (argc == 2)
+    if (argc >= 2)
     {
         acc_range = (int)atom_getfloatarg(0, argc, argv);
         gyro_range = (int)atom_getfloatarg(1, argc, argv);
     }
 
-    post("mpu6050rpi_new acc_range: %d gyro_range: %d", acc_range, gyro_range);
+    float filter_coeff = argc == 3 ? atom_getfloatarg(2, argc, argv) : 0.98f;
 
-    init_mpu6050(acc_range, gyro_range);
+    init_mpu6050(acc_range, gyro_range, filter_coeff);
     t_mpu6050rpi *x = (t_mpu6050rpi *)pd_new(mpu6050rpi_class);
 
     inlet_new(&x->x_obj, &x->x_obj.ob_pd, gensym("bang"), gensym("calibrate"));

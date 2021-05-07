@@ -15,7 +15,7 @@
 #define FILTER_GYRO_COEF 0.98f
 #define RAD_T_DEG 57.29577951308 //Radians to degrees (180/PI)
 
-void init_mpu6050();
+void init_mpu6050(int acc_range, int gyro_range, float f_coeff);
 void stop_mpu6050();
 void start_thread();
 void get_offsets(void* x, void (*callback)(void*, float, float, float, float, float, float));
@@ -33,6 +33,8 @@ uint8_t acc_config;
 uint8_t gyro_config;
 float acc_sens;
 float gyro_sens;
+
+float filter_coeff;
 
 struct timespec start,end;
 
