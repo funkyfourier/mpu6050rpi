@@ -1,6 +1,16 @@
 #ifndef MPU6050
 #define MPU6050
+
 #include <time.h>
+#include <math.h>
+#include "m_pd.h"
+#include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+#include <i2c/smbus.h>
+#include <stdlib.h>
 
 /*
 //Offsets - supply your own here (calculate offsets with getOffsets function)
@@ -62,6 +72,11 @@ float offset_acc_z;
 float offset_gyro_r;
 float offset_gyro_p;
 float offset_gyro_y;
+
+uint8_t acc_config;
+uint8_t gyro_config;
+float acc_sens;
+float gyro_sens;
 
 struct timespec start,end;
 

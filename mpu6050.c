@@ -1,13 +1,4 @@
 #include "mpu6050.h"
-#include "m_pd.h"
-#include <pthread.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
-#include <i2c/smbus.h>
-#include <math.h>
-#include <stdlib.h>
 
 struct OffsetParams
 {
@@ -27,10 +18,10 @@ void get_gyro_raw(float *roll, float *pitch, float *yaw)
 
 void get_gyro(float *roll, float *pitch, float *yaw)
 {
-    get_gyro_raw(roll, pitch, yaw);                                 //Store raw values into variables
-    *roll = round((*roll - offset_gyro_r) * 1000.0 / GYRO_SENS) / 1000.0; //Remove the offset and divide by the gyroscope sensetivity (use 1000 and round() to round the value to three decimal places)
-    *pitch = round((*pitch - offset_gyro_p) * 1000.0 / GYRO_SENS) / 1000.0;
-    *yaw = round((*yaw - offset_gyro_y) * 1000.0 / GYRO_SENS) / 1000.0;
+    get_gyro_raw(roll, pitch, yaw);                                       //Store raw values into variables
+    *roll = round((*roll - offset_gyro_r) * 1000.0 / gyro_sens) / 1000.0; //Remove the offset and divide by the gyroscope sensetivity (use 1000 and round() to round the value to three decimal places)
+    *pitch = round((*pitch - offset_gyro_p) * 1000.0 / gyro_sens) / 1000.0;
+    *yaw = round((*yaw - offset_gyro_y) * 1000.0 / gyro_sens) / 1000.0;
 }
 
 void get_accel_raw(float *x, float *y, float *z)
@@ -45,22 +36,25 @@ void get_accel_raw(float *x, float *y, float *z)
 
 void get_accel(float *x, float *y, float *z)
 {
-    get_accel_raw(x, y, z);                                    //Store raw values into variables
-    *x = round((*x - offset_acc_x) * 1000.0 / ACCEL_SENS) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
-    *y = round((*y - offset_acc_y) * 1000.0 / ACCEL_SENS) / 1000.0;
-    *z = round((*z - offset_acc_z) * 1000.0 / ACCEL_SENS) / 1000.0;
+    get_accel_raw(x, y, z);                                         //Store raw values into variables
+    *x = round((*x - offset_acc_x) * 1000.0 / acc_sens) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
+    *y = round((*y - offset_acc_y) * 1000.0 / acc_sens) / 1000.0;
+    *z = round((*z - offset_acc_z) * 1000.0 / acc_sens) / 1000.0;
 }
 
-void get_angle(int axis, float *result) {
-	if (axis >= 0 && axis <= 2) { //Check that the axis is in the valid range
-		*result = angle[axis]; //Get the result
-		return 0;
-	}
-	else {
-		post("ERR (MPU6050.cpp:getAngle()): 'axis' must be between 0 and 2 (for roll, pitch or yaw)");
-		*result = 0; //Set result to zero
-		return 1;
-	}
+void get_angle(int axis, float *result)
+{
+    if (axis >= 0 && axis <= 2)
+    {                          //Check that the axis is in the valid range
+        *result = angle[axis]; //Get the result
+        return 0;
+    }
+    else
+    {
+        post("ERR (MPU6050.cpp:getAngle()): 'axis' must be between 0 and 2 (for roll, pitch or yaw)");
+        *result = 0; //Set result to zero
+        return 1;
+    }
 }
 
 void *calculate_offsets(void *arg)
@@ -91,7 +85,7 @@ void *calculate_offsets(void *arg)
     gr_off = gr_off / 10000, gp_off = gp_off / 10000, gy_off = gy_off / 10000; //Divide by number of loops (to average)
     ax_off = ax_off / 10000, ay_off = ay_off / 10000, az_off = az_off / 10000;
 
-    az_off = az_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
+    az_off = az_off - acc_sens; //Remove 1g from the value calculated to compensate for gravity)
 
     offsetParams->callback(offsetParams->x, ax_off, ay_off, az_off, gr_off, gp_off, gy_off);
 
@@ -109,7 +103,8 @@ void get_offsets(void *x, void (*callback)(void *, float, float, float, float, f
     pthread_create(&calc_offset_thread, NULL, calculate_offsets, (void *)offsetParams);
 }
 
-void set_offsets(float acc_x, float acc_y, float acc_z, float gyro_r, float gyro_p, float gyro_y){
+void set_offsets(float acc_x, float acc_y, float acc_z, float gyro_r, float gyro_p, float gyro_y)
+{
     offset_acc_x = acc_x;
     offset_acc_y = acc_y;
     offset_acc_z = acc_z;
@@ -145,7 +140,7 @@ void *sensor_loop(void *arg)
 
         clock_gettime(CLOCK_REALTIME, &end);
         dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
-		clock_gettime(CLOCK_REALTIME, &start); //Save time to start clock
+        clock_gettime(CLOCK_REALTIME, &start);                                  //Save time to start clock
     }
     post("thread stopped");
     return 0;
@@ -182,10 +177,6 @@ void setup()
 
     i2c_smbus_write_byte_data(f_dev, 0x19, 0b00000100); //Set sample rate divider (to 200Hz) - see Register Map
 
-    //TODO Set up different ranges
-    uint8_t gyro_config = 0b00000000;
-    uint8_t acc_config = 0b00000000;
-
     i2c_smbus_write_byte_data(f_dev, 0x1b, gyro_config); //Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
 
     i2c_smbus_write_byte_data(f_dev, 0x1c, acc_config);
@@ -209,17 +200,55 @@ void start_thread()
     pthread_create(&sensor_loop_thread, NULL, sensor_loop, NULL);
 }
 
-void init_mpu6050()
+void set_ranges(int acc_range, int gyro_range)
 {
-    post("init_mpu6050");
 
-    offset_acc_x = 0;
-    offset_acc_y = 0;
-    offset_acc_z = 0;
-    offset_gyro_r = 0;
-    offset_gyro_p = 0;
-    offset_gyro_y = 0;
+    if (acc_range == 1)
+    {
+        acc_sens = 8192.0;
+        acc_config = 0b00001000;
+    }
+    else if (acc_range == 2)
+    {
+        acc_sens = 4096.0;
+        acc_config = 0b00010000;
+    }
+    else if (acc_range == 3)
+    {
+        acc_sens = 2048.0;
+        acc_config = 0b00011000;
+    }
+    else
+    {
+        acc_sens = 16384.0;
+        acc_config = 0b00000000;
+    }
 
+    if (gyro_range == 1)
+    {
+        gyro_sens = 65.5;
+        gyro_config = 0b00001000;
+    }
+    else if (gyro_range == 2)
+    {
+        gyro_sens = 32.8;
+        gyro_config = 0b00010000;
+    }
+    else if (gyro_range == 3)
+    {
+        gyro_sens = 16.4;
+        gyro_config = 0b00011000;
+    }
+    else
+    {
+        gyro_sens = 131.0;
+        gyro_config = 0b00000000;
+    }
+}
+
+void init_mpu6050(int acc_range, int gyro_range)
+{
+    set_ranges(acc_range, gyro_range);
     setup();
     start_thread();
 }
