@@ -42,7 +42,7 @@ void get_accel(float *x, float *y, float *z)
     *z = round((*z - offset_acc_z) * 1000.0 / acc_sens) / 1000.0;
 }
 
-void get_angle(int axis, float *result)
+int get_angle(int axis, float *result)
 {
     if (axis >= 0 && axis <= 2)
     {                          //Check that the axis is in the valid range
