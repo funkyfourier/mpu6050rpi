@@ -1,35 +1,58 @@
-#N canvas 394 291 611 437 12;
-#X obj 99 125 bng 15 250 50 0 empty empty offsets 17 7 0 10 -262144
--1 -1;
-#X msg 164 155 14770.7 12608.6 -10677.4 -316.32 -156.091 123.227;
-#X obj 34 86 metro 100;
-#X obj 164 44 loadbang;
-#X obj 34 305 nbx 5 14 -1e+37 1e+37 0 0 empty empty x 0 -8 0 10 -262144
--1 -1 -0.901076 256;
-#X obj 120 252 nbx 10 14 -5000 5000 0 0 empty empty z 0 -8 0 10 -262144
--1 -1 -0.651958 256;
-#X obj 77 278 nbx 5 14 -1e+37 1e+37 0 0 empty empty y 0 -8 0 10 -262144
--1 -1 -2.1072 256;
-#X obj 34 62 loadbang;
-#X msg 208 128 set \$1 \$2 \$3 \$4 \$5 \$6;
-#X obj 164 218 s \$0-setcal;
-#X obj 176 104 t b l;
-#X obj 176 81 r \$0-setcal;
-#X msg 46 111 start;
-#X msg 54 140 stop;
-#X obj 34 181 mpu6050rpi 0 0 0.95;
-#X connect 0 0 14 1;
-#X connect 1 0 14 2;
-#X connect 2 0 14 0;
+#N canvas 43 112 930 636 12;
+#X obj 394 283 bng 15 250 50 0 empty empty calculate_offsets 17 7 0
+10 -262144 -1 -1;
+#X msg 556 397 14770.7 12608.6 -10677.4 -316.32 -156.091 123.227;
+#X obj 284 191 metro 100;
+#X obj 556 286 loadbang;
+#X obj 329 541 nbx 5 14 -1e+37 1e+37 0 0 empty empty x 0 -8 0 10 -262144
+-1 -1 -0.0720729 256;
+#X obj 415 488 nbx 10 14 -5000 5000 0 0 empty empty z 0 -8 0 10 -262144
+-1 -1 2.87184 256;
+#X obj 372 514 nbx 5 14 -1e+37 1e+37 0 0 empty empty y 0 -8 0 10 -262144
+-1 -1 1.10287 256;
+#X msg 600 370 set \$1 \$2 \$3 \$4 \$5 \$6;
+#X obj 459 454 s \$0-setcal;
+#X obj 568 346 t b l;
+#X obj 568 323 r \$0-setcal;
+#X msg 235 267 start;
+#X msg 235 327 stop;
+#X obj 329 417 mpu6050rpi 0 0 0.95;
+#X obj 284 172 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X text 413 21 First thing to do after installing a new sensor is to
+calculate the offsets. To do so \, bang the second inlet. This will
+take a couple of minutes \, and it is important that the sensor lay
+still on a flat surface during this procedure. When this is done the
+offsets will be output on the third outlet. It is recommended that
+you set these in a message as done here \, and loadbang them into the
+third inlet. That way \, you won't have to calculate the offsets for
+the particular sensor again., f 39;
+#X text 136 48 A bang on the first inlet outputs the x \, y z values
+of the sensor to the first \, second and third outlet. You might want
+to set up a metro object to get continuos updates., f 34;
+#X text 10 449 1) Accelerometer range (0 \, 1 \, 2 or 3);
+#X text 10 468 2) Gyroscope range (0 \, 1 \, 2 \, or 3);
+#X text 10 487 3) Filter coefficient. This basically means how much
+to trust the accelerometer vs gyro in the filtering algorithm., f
+35;
+#X text 11 429 Creation arguments:;
+#X text 11 561 If you omit the creation arguments they will by default
+be 0 0 0.95, f 35;
+#X text 12 258 The mpu6050rpi external uses its own thread to calculate
+the angles continuosly. To start or stop the thread send messages "start"
+or "stop" to the first inlet., f 28;
+#X connect 0 0 13 1;
+#X connect 1 0 13 2;
+#X connect 2 0 13 0;
 #X connect 3 0 1 0;
-#X connect 7 0 2 0;
-#X connect 8 0 1 0;
-#X connect 10 0 1 0;
-#X connect 10 1 8 0;
-#X connect 11 0 10 0;
-#X connect 12 0 14 0;
-#X connect 13 0 14 0;
-#X connect 14 0 4 0;
-#X connect 14 1 6 0;
-#X connect 14 2 5 0;
-#X connect 14 3 9 0;
+#X connect 7 0 1 0;
+#X connect 9 0 1 0;
+#X connect 9 1 7 0;
+#X connect 10 0 9 0;
+#X connect 11 0 13 0;
+#X connect 12 0 13 0;
+#X connect 13 0 4 0;
+#X connect 13 1 6 0;
+#X connect 13 2 5 0;
+#X connect 13 3 8 0;
+#X connect 14 0 2 0;
