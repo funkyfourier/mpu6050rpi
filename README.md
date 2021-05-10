@@ -6,8 +6,6 @@ Pure Data external for the MPU6050 motion sensor.
 
 Based on code from [alex-mous' MPU6050 library](https://github.com/alex-mous/MPU6050-C-CPP-Library-for-Raspberry-Pi) and [rfetick's MPU6050_light for Arduino](https://github.com/rfetick/MPU6050_light).
 
-This 
-
 Due to my limited knowledge of C, the code could probably use some restructuring. Please do refactor! School me!
 
 #### Installation
