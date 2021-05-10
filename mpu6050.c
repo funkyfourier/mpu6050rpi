@@ -89,6 +89,8 @@ void *calculate_offsets(void *arg)
 
     offsetParams->callback(offsetParams->x, ax_off, ay_off, az_off, gr_off, gp_off, gy_off);
 
+    free(offsetParams);
+
     start_thread();
 
     return 0;
@@ -96,7 +98,7 @@ void *calculate_offsets(void *arg)
 
 void get_offsets(void *x, void (*callback)(void *, float, float, float, float, float, float))
 {
-    struct OffsetParams *offsetParams = (struct OffsetParams *)malloc(sizeof(struct OffsetParams));
+    struct OffsetParams* offsetParams = (struct OffsetParams *)malloc(sizeof(struct OffsetParams));
     offsetParams->x = x;
     offsetParams->callback = callback;
     pthread_t calc_offset_thread;
@@ -169,7 +171,6 @@ void setup()
 
 void *sensor_loop(void *arg)
 {
-    post("sensor thread started");
     clock_gettime(CLOCK_REALTIME, &start);
     while (running > 0)
     {
@@ -197,7 +198,13 @@ void start_thread()
     if(running == 1) return;
     running = 1;
     pthread_t sensor_loop_thread;
-    pthread_create(&sensor_loop_thread, NULL, sensor_loop, NULL);
+    int thread_result = pthread_create(&sensor_loop_thread, NULL, sensor_loop, NULL);
+    if(thread_result == 0){
+        post("sensor thread started");
+    }
+    else {
+        post("ERROR starting sensor thread");
+    }
 }
 
 void set_ranges(int acc_range, int gyro_range)

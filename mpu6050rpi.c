@@ -90,7 +90,6 @@ void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
 
 void mpu6050rpi_free(t_mpu6050rpi *x)
 {
-    post("free");
     stop_thread();
 }
 
