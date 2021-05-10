@@ -6,7 +6,9 @@ Pure Data external for the MPU6050 motion sensor.
 
 Based on code from [alex-mous' MPU6050 library](https://github.com/alex-mous/MPU6050-C-CPP-Library-for-Raspberry-Pi) and [rfetick's MPU6050_light for Arduino](https://github.com/rfetick/MPU6050_light).
 
-Due to my limited knowledge of C, the code could probably use some restructuring. Please do refactor! School me!
+#### Please excuse my C
+
+Due to my limited knowledge of C, the code could probably use some restructuring. Do refactor! School me!
 
 #### Installation
 
@@ -17,4 +19,4 @@ Due to my limited knowledge of C, the code could probably use some restructuring
 
 #### How to use
 
-Add the `[mpu6050rpi] external` to your Pure Data patch. Right-click and select *help*.
+Add the `[mpu6050rpi]` external to your Pure Data patch. Right-click and select *help*.
