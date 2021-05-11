@@ -10,10 +10,17 @@ typedef struct _mpu6050rpi
     t_outlet *accel_values_out;
     t_outlet *offset_values_out;
     t_atom values[3];
+    pthread_attr_t thread_attr;
+	pthread_t x_threadid;
 } t_mpu6050rpi;
 
 void mpu6050rpi_bang(t_mpu6050rpi *x)
 {
+    
+}
+
+void mpu6050rpi_output_vals(t_mpu6050rpi *x){
+    sys_lock();
     float val_x, val_y, val_z;
     
     get_angle(0, &val_x);
@@ -29,6 +36,7 @@ void mpu6050rpi_bang(t_mpu6050rpi *x)
     SETFLOAT(x->values + 1, val_y);
     SETFLOAT(x->values + 2, val_z);
     outlet_list(x->accel_values_out, &s_list, 3, x->values);
+    sys_unlock();
 }
 
 void mpu6050rpi_calibrate_callback(
@@ -92,22 +100,24 @@ void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
     x->accel_values_out = outlet_new(&x->x_obj, &s_list);
     x->offset_values_out = outlet_new(&x->x_obj, &s_list);
 
+    mpu6050rpi_start_thread(x);
+
     return x;
 }
 
 void mpu6050rpi_free(t_mpu6050rpi *x)
 {
-    stop_thread();
+    stop_thread(x->x_threadid);
 }
 
 void mpu6050rpi_start_thread(t_mpu6050rpi *x)
 {
-    start_thread();
+    start_thread(x->thread_attr, x->x_threadid, mpu6050rpi_output_vals, x);
 }
 
 void mpu6050rpi_stop_thread(t_mpu6050rpi *x)
 {
-    stop_thread();
+    stop_thread(x->x_threadid);
 }
 
 void mpu6050rpi_setup(void)
