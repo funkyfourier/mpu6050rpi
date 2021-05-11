@@ -21,6 +21,7 @@ void start_thread();
 void get_offsets(void* x, void (*callback)(void*, float, float, float, float, float, float));
 void set_offsets(float acc_x, float acc_y, float acc_z, float gyro_r, float gyro_p, float gyro_y);
 int get_angle(int axis, float *result);
+void get_accel(float *x, float *y, float *z);
 
 float offset_acc_x;
 float offset_acc_y;
