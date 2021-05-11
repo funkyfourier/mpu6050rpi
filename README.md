@@ -6,10 +6,6 @@ Pure Data external for the MPU6050 motion sensor.
 
 Based on code from [alex-mous' MPU6050 library](https://github.com/alex-mous/MPU6050-C-CPP-Library-for-Raspberry-Pi) and [rfetick's MPU6050_light for Arduino](https://github.com/rfetick/MPU6050_light).
 
-#### Please excuse my C
-
-Due to my limited knowledge of C, the code could probably use some restructuring. Do refactor! School me!
-
 #### Installation
 
 1. Install the GY-521 as shown [in this video](https://www.youtube.com/watch?v=JTFa5l7zAA4). Also enable i2c.
@@ -20,3 +16,7 @@ Due to my limited knowledge of C, the code could probably use some restructuring
 #### How to use
 
 Add the `[mpu6050rpi]` external to your Pure Data patch. Right-click and select *help*.
+
+#### Please excuse my C
+
+Due to my limited knowledge of C, the code could probably use some restructuring. Do refactor! School me!

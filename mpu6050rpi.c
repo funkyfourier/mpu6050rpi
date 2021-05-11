@@ -6,10 +6,9 @@ static t_class *mpu6050rpi_class;
 typedef struct _mpu6050rpi
 {
     t_object x_obj;
-    t_outlet *angle_x_out;
-    t_outlet *angle_y_out;
-    t_outlet *angle_z_out;
+    t_outlet *angle_values_out;
     t_outlet *offset_values_out;
+    t_atom angle_values[3];
 } t_mpu6050rpi;
 
 void mpu6050rpi_bang(t_mpu6050rpi *x)
@@ -18,9 +17,10 @@ void mpu6050rpi_bang(t_mpu6050rpi *x)
     get_angle(0, &angle_x);
     get_angle(1, &angle_y);
     get_angle(2, &angle_z);
-    outlet_float(x->angle_x_out, angle_x);
-    outlet_float(x->angle_y_out, angle_y);
-    outlet_float(x->angle_z_out, angle_z);
+    SETFLOAT(x->angle_values, angle_x);
+    SETFLOAT(x->angle_values + 1, angle_y);
+    SETFLOAT(x->angle_values + 2, angle_z);
+    outlet_list(x->angle_values_out, &s_list, 3, x->angle_values);
 }
 
 void mpu6050rpi_calibrate_callback(
@@ -33,12 +33,12 @@ void mpu6050rpi_calibrate_callback(
     float gy_off)
 {
     t_atom list[6];
-    SETFLOAT(list, (t_float)ax_off);
-    SETFLOAT(list + 1, (t_float)ay_off);
-    SETFLOAT(list + 2, (t_float)az_off);
-    SETFLOAT(list + 3, (t_float)gr_off);
-    SETFLOAT(list + 4, (t_float)gp_off);
-    SETFLOAT(list + 5, (t_float)gy_off);
+    SETFLOAT(list, ax_off);
+    SETFLOAT(list + 1, ay_off);
+    SETFLOAT(list + 2, az_off);
+    SETFLOAT(list + 3, gr_off);
+    SETFLOAT(list + 4, gp_off);
+    SETFLOAT(list + 5, gy_off);
     t_mpu6050rpi *y = (t_mpu6050rpi *)x;
     outlet_list(y->offset_values_out, &s_list, 6, list);
 }
@@ -80,9 +80,7 @@ void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
     inlet_new(&x->x_obj, &x->x_obj.ob_pd, gensym("bang"), gensym("calibrate"));
     inlet_new(&x->x_obj, &x->x_obj.ob_pd, gensym("list"), gensym("set_offsets"));
 
-    x->angle_x_out = outlet_new(&x->x_obj, &s_float);
-    x->angle_y_out = outlet_new(&x->x_obj, &s_float);
-    x->angle_z_out = outlet_new(&x->x_obj, &s_float);
+    x->angle_values_out = outlet_new(&x->x_obj, &s_list);
     x->offset_values_out = outlet_new(&x->x_obj, &s_list);
 
     return x;
