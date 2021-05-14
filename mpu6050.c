@@ -136,9 +136,11 @@ static float wrap(float angle_to_wrap, float limit)
 
 void stop_thread(pthread_t x_threadid)
 {
-    while (pthread_cancel(x_threadid) < 0)
-        ;
     running = 0;
+    post("pthread_cancel id: %p", x_threadid);
+    while (pthread_cancel(x_threadid) < 0){
+        post("pthread_cancel");
+    }
 }
 
 void setup()
@@ -201,7 +203,7 @@ void *sensor_loop(void *arg)
 
         dtTotal += dt;
 
-        if (dtTotal >= 0.5)
+        if (dtTotal >= output_secs)
         {
             sensorParams->callback(sensorParams->x);
             dtTotal = 0;
@@ -218,10 +220,20 @@ void *sensor_loop(void *arg)
     return 0;
 }
 
-void start_thread(pthread_attr_t thread_attr, pthread_t x_threadid, void (*callback)(void *), void *x)
+void start_thread(
+    pthread_attr_t thread_attr,
+    pthread_t x_threadid,
+    void (*callback)(void *),
+    void *x)
 {
-    if (running == 1)
-        return;
+        post("the_threadid: %p", the_threadid);
+    if (running == 1){
+        post("running");
+        stop_thread(x_threadid);
+    }
+
+    the_threadid = x_threadid;
+        
     running = 1;
 
     struct SensorParams *sensorParams = (struct SensorParams *)malloc(sizeof(struct SensorParams));
@@ -295,9 +307,11 @@ void set_ranges(int acc_range, int gyro_range)
     }
 }
 
-void init_mpu6050(int acc_range, int gyro_range, float f_coeff)
+void init_mpu6050(int acc_range, int gyro_range, float output_freq, float f_coeff)
 {
+    post("acc_range: %d, gyro_range: %d, output_freq: %f, f_coeff: %f", acc_range, gyro_range, output_freq, f_coeff);
     filter_coeff = f_coeff;
+    output_secs = 1. / output_freq;
     set_ranges(acc_range, gyro_range);
     setup();
 }
