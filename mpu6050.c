@@ -70,6 +70,7 @@ int get_angle(int axis, float *result)
 void *calculate_offsets(void *arg)
 {
     running = 0;
+    sleep(1);
     sys_lock();
     post("Calculating the offsets. Please keep the accelerometer level and still. This could take a couple of minutes...");
     sys_unlock();
@@ -134,13 +135,9 @@ static float wrap(float angle_to_wrap, float limit)
     return angle_to_wrap;
 }
 
-void stop_thread(pthread_t x_threadid)
+void stop_thread()
 {
     running = 0;
-    post("pthread_cancel id: %p", x_threadid);
-    while (pthread_cancel(x_threadid) < 0){
-        post("pthread_cancel");
-    }
 }
 
 void setup()
@@ -189,7 +186,6 @@ void *sensor_loop(void *arg)
     clock_gettime(CLOCK_REALTIME, &start);
     while (running > 0)
     {
-        pthread_testcancel();
         get_gyro(&gr, &gp, &gy);
         get_accel(&ax, &ay, &az);
         sgZ = (az >= 0) - (az < 0); // allow one angle to go from -180° to +180°
@@ -205,7 +201,7 @@ void *sensor_loop(void *arg)
 
         if (dtTotal >= output_secs)
         {
-            sensorParams->callback(sensorParams->x);
+            if(running) sensorParams->callback(sensorParams->x);
             dtTotal = 0;
         }
 
@@ -213,9 +209,7 @@ void *sensor_loop(void *arg)
         dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
         clock_gettime(CLOCK_REALTIME, &start);                                  //Save time to start clock
     }
-    sys_lock();
     post("sensor thread stopped");
-    sys_unlock();
     free(sensorParams);
     return 0;
 }
@@ -226,30 +220,16 @@ void start_thread(
     void (*callback)(void *),
     void *x)
 {
-        post("the_threadid: %p", the_threadid);
     if (running == 1){
-        post("running");
-        stop_thread(x_threadid);
+        stop_thread();
     }
 
-    the_threadid = x_threadid;
-        
     running = 1;
 
     struct SensorParams *sensorParams = (struct SensorParams *)malloc(sizeof(struct SensorParams));
     sensorParams->x = x;
     sensorParams->callback = callback;
 
-    if (pthread_attr_init(&thread_attr) < 0)
-    {
-        error("threadtemplate: could not launch receive thread");
-        return;
-    }
-    if (pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED) < 0)
-    {
-        error("threadtemplate: could not launch receive thread");
-        return;
-    }
     if (pthread_create(&x_threadid, &thread_attr, sensor_loop, (void *)sensorParams) < 0)
     {
         error("threadtemplate: could not launch receive thread");
@@ -309,7 +289,6 @@ void set_ranges(int acc_range, int gyro_range)
 
 void init_mpu6050(int acc_range, int gyro_range, float output_freq, float f_coeff)
 {
-    post("acc_range: %d, gyro_range: %d, output_freq: %f, f_coeff: %f", acc_range, gyro_range, output_freq, f_coeff);
     filter_coeff = f_coeff;
     output_secs = 1. / output_freq;
     set_ranges(acc_range, gyro_range);

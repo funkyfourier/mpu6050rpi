@@ -29,7 +29,7 @@ void mpu6050rpi_output_vals(t_mpu6050rpi *x){
     SETFLOAT(x->values + 1, val_y);
     SETFLOAT(x->values + 2, val_z);
     sys_lock();
-    post("thread_id: %p ", &x->x_threadid);
+    //post("thread_id: %p ", &x->x_threadid);
     outlet_list(x->angle_values_out, &s_list, 3, x->values);
     sys_unlock();
 
@@ -62,6 +62,7 @@ void mpu6050rpi_calibrate_callback(
     t_mpu6050rpi *y = (t_mpu6050rpi *)x;
     outlet_list(y->offset_values_out, &s_list, 6, list);
     sys_unlock();
+    mpu6050rpi_start_thread(y);
 }
 
 void mpu6050rpi_calibrate(t_mpu6050rpi *x)
@@ -86,8 +87,8 @@ void mpu6050rpi_set_offsets(
 
 void mpu6050rpi_free(t_mpu6050rpi *x)
 {
-    post("free thread id: %p", x->x_threadid);
-    stop_thread(x->x_threadid);
+    stop_thread();
+    sleep(1);
 }
 
 void mpu6050rpi_start_thread(t_mpu6050rpi *x)
@@ -97,12 +98,11 @@ void mpu6050rpi_start_thread(t_mpu6050rpi *x)
 
 void mpu6050rpi_stop_thread(t_mpu6050rpi *x)
 {
-    stop_thread(x->x_threadid);
+    stop_thread();
 }
 
 void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
 {
-    post("running: %d", running);
     int acc_range = 0, gyro_range = 0;
     float output_freq = 2., f_coeff = 0.98;
     if (argc == 4)
@@ -123,7 +123,7 @@ void *mpu6050rpi_new(t_symbol *s, int argc, t_atom *argv)
     x->accel_values_out = outlet_new(&x->x_obj, &s_list);
     x->offset_values_out = outlet_new(&x->x_obj, &s_list);
 
-    //mpu6050rpi_start_thread(x);
+    mpu6050rpi_start_thread(x);
 
     return x;
 }

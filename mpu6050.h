@@ -16,7 +16,7 @@
 #define RAD_T_DEG 57.29577951308 //Radians to degrees (180/PI)
 
 void init_mpu6050(int acc_range, int gyro_range, float output_freq, float f_coeff);
-void stop_thread(pthread_t x_threadid);
+void stop_thread();
 void start_thread(pthread_attr_t thread_attr,
                   pthread_t x_threadid,
                   void (*callback)(void *),
@@ -32,8 +32,6 @@ float offset_acc_z;
 float offset_gyro_r;
 float offset_gyro_p;
 float offset_gyro_y;
-
-pthread_t the_threadid;
 
 uint8_t acc_config;
 uint8_t gyro_config;
